@@ -1,161 +1,159 @@
 import os
 from tabulate import tabulate
 import questionary
-from Conexion import *
-import Usuario
-import Contrasena
+from Connection import *
+import User
+import Password
 
-conexion = conectar()
-crear_tablas(conexion)
+connection = connect()
+create_tables(connection)
 
 
 def check_not_empty(answer):
     if len(answer) > 0:
         return True
     else:
-        return 'Debe ingresar un valor'
+        return 'You must provide a value.'
 
 
-def inicio():
+def home():
     os.system('clear')
-    comprobar = Usuario.comprobar_usuario()
-    if len(comprobar) == 0:
-        print('Bienvenido, registre su Informacion:')
-        nombre = questionary.text('Ingrese su nombre:',
-                                  validate=check_not_empty,
-                                  qmark='-').ask()
-        apellido = questionary.text('Ingrese su apellido:',
-                                    validate=check_not_empty, qmark='-').ask()
-        contrasena_maestra = questionary.password(
-            'Ingrese su contraseña maestra:', qmark='-').ask()
-        respuesta = Usuario.registrar(nombre, apellido, contrasena_maestra)
-        if respuesta == 'Registro correcto':
-            os.system('clear')
-            print(f'Bienvenido {nombre}')
-            menu()
+    if User.check_user():
+        master_password = questionary.password(
+            'Enter your master password:', qmark='-').ask()
+        check_password = User.check_master_password(1, master_password)
+        if len(check_password) == 0:
+            questionary.print('Invalid password', style='fg:darkred')
         else:
-            print(respuesta)
+            print('Welcome!')
+            menu()
     else:
-        contrasena_maestra = questionary.password(
-            'Ingrese su contraseña maestra:', qmark='-').ask()
-        respuesta = Usuario.comprobar_contrasena(1, contrasena_maestra)
-        if len(respuesta) == 0:
-            print('Contraseña incorrecta')
-        else:
-            print('Bienvenido!')
+        print('Welcome, please register:')
+        first_name = questionary.text('First name:',
+                                      validate=check_not_empty,
+                                      qmark='-').ask()
+        last_name = questionary.text('Last name:',
+                                     validate=check_not_empty, qmark='-').ask()
+        master_password = questionary.password(
+            'Master password:', qmark='-').ask()
+        answer = User.register_user(first_name, last_name, master_password)
+        if answer == 'Successful registration.':
+            os.system('clear')
+            print(f'Welcome {first_name}')
             menu()
+        else:
+            print(answer)
 
 
 def menu():
     while True:
-        opciones = ['Añadir contraseña',
-                    'Ver todas las contraseñas',
-                    'Visualizar una contraseña',
-                    'Modificar una contraseña',
-                    'Eliminar una contraseña',
-                    'Salir']
-        opcion = questionary.select("Selecciona una de las siguientes opciones:",
-                                    choices=opciones, qmark='-').ask()
-        if opcion == 'Añadir contraseña':
-            nueva_contrasena()
-        elif opcion == 'Ver todas las contraseñas':
-            mostrar_contrasenas()
-        elif opcion == 'Visualizar una contraseña':
-            buscar_contrasena()
-        elif opcion == 'Modificar una contraseña':
-            modificar_contrasena()
-        elif opcion == 'Eliminar una contraseña':
-            eliminar_contrasena()
-        elif opcion == 'Salir':
+        options = ['Add new entry',
+                   'Show me all entries',
+                   'Show me one password',
+                   'Change one entry',
+                   'Delete one entry',
+                   'Exit']
+        option = questionary.select("What do you want to do?",
+                                    choices=options, qmark='-').ask()
+        if option == 'Add new entry':
+            new_entry()
+        elif option == 'Show me all entries':
+            show_all_entries()
+        elif option == 'Show me one password':
+            show_entry_complete()
+        elif option == 'Change one entry':
+            change_entry()
+        elif option == 'Delete one entry':
+            delete_entry()
+        elif option == 'Exit':
             break
         else:
-            print('No ingreso una opcion valida')
-        questionary.confirm('Volver?').ask()
+            print('Invalid option')
+            break
+        # questionary.confirm('Go back?').ask()
+        questionary.select('',choices=['Go back'], qmark='', instruction='(press enter to go back)').ask()
         os.system('clear')
-    print('Hasta pronto!')
+    print('See you later!')
 
 
-def nueva_contrasena():
-    nombre = questionary.text('Ingrese el nombre:',
-                              validate=check_not_empty, qmark='-').ask()
-    url = questionary.text('Ingrese la url:',
-                           validate=check_not_empty, qmark='-').ask()
-    nombre_usuario = questionary.text('Ingrese el nombre de usuario:',
-                                      validate=check_not_empty, qmark='-').ask()
-    contrasena = questionary.text('Ingrese la contraseña:',
+def new_entry():
+    questionary.print('New entry', style='bold')
+    entry_name = questionary.text('Name:',
                                   validate=check_not_empty, qmark='-').ask()
-    descripcion = questionary.text('Ingrese la descripcion:', qmark='-').ask()
-    respuesta = Contrasena.registrar(
-        nombre, url, nombre_usuario, contrasena, descripcion)
-    print(respuesta)
+    username = questionary.text('Username:',
+                                validate=check_not_empty, qmark='-').ask()
+    password = questionary.text('Password:',
+                                validate=check_not_empty, qmark='-').ask()
+    description = questionary.text('(optional) Description:', qmark='-').ask()
+    url = questionary.text('(optional) url:', qmark='-').ask()
+    answer = Password.register_entry(
+        entry_name, url, username, password, description)
+    print(answer)
 
 
-def mostrar_contrasenas():
-    datos = Contrasena.mostrar()
-    nuevos_datos = []
-    for dato in datos:
-        convertido = list(dato)
-        convertido[4] = '********'
-        nuevos_datos.append(convertido)
-    headers = ['ID', 'NOMBRE', 'URL', 'USUARIO', 'CONTRASEÑA', 'DESCRIPCION']
-    tabla = tabulate(nuevos_datos, headers, tablefmt='fancy_grid')
-    print('\t\t\tTodas las contraseñas')
-    print(tabla)
+def show_all_entries():
+    data = Password.print_entries()
+    new_data = []
+    for item in data:
+        item_ = list(item)
+        item_[4] = '********'
+        new_data.append(item_)
+    headers = ['ID', 'NAME', 'URL', 'USERNAME', 'PASSWORD', 'DESCRIPTION']
+    table = tabulate(new_data, headers, tablefmt='fancy_grid')
+    questionary.print('\t\t\tAll entries', style='bold')
+    print(table)
 
 
-def buscar_contrasena():
-    contrasena_maestra = questionary.password(
-        'Ingrese su contraseña maestra:', qmark='-').ask()
-    respuesta = Usuario.comprobar_contrasena(1, contrasena_maestra)
-    if len(respuesta) == 0:
-        print('Contraseña incorrecta')
+def show_entry_complete():
+    master_password = questionary.password(
+        'Enter your master password:', qmark='-').ask()
+    answer = User.check_master_password(1, master_password)
+    if len(answer) == 0:
+        questionary.print('Invalid password', style='fg:darkred')
     else:
-        id = questionary.text('Ingrese el id de la contraseña que desea buscar:',
+        id = questionary.text('Enter the entry\'s id you are looking for:',
                               validate=check_not_empty, qmark='-').ask()
-        datos = Contrasena.buscar(id)
-        headers = ['ID', 'NOMBRE', 'URL',
-                   'USUARIO', 'CONTRASEÑA', 'DESCRIPCION']
-        tabla = tabulate(datos, headers, tablefmt='fancy_grid')
-        print('\t\t\tContraseña')
-        print(tabla)
+        data = Password.find_entry(id)
+        headers = ['URL', 'USERNAME', 'PASSWORD', 'DESCRIPTION']
+        table = tabulate([data[0][2:]], headers, tablefmt='fancy_grid')
+        questionary.print(f'\t\t{data[0][1]} (entry {id})', style='bold')
+        print(table)
 
 
-def modificar_contrasena():
-    contrasena_maestra = questionary.password('Ingrese su contraseña maestra:',
-                                              qmark='-').ask()
-    respuesta = Usuario.comprobar_contrasena(1, contrasena_maestra)
-    if len(respuesta) == 0:
-        print('Contraseña incorrecta')
+def change_entry():
+    master_password = questionary.password('Enter your master password:',
+                                           qmark='-').ask()
+    answer = User.check_master_password(1, master_password)
+    if len(answer) == 0:
+        questionary.print('Invalid password', style='fg:darkred')
     else:
-        id = questionary.text('Ingrese el id de la contraseña que desea modificar:',
+        id = questionary.text('Enter the id of the entry you want to modify:',
                               validate=check_not_empty, qmark='-').ask()
-        nombre = questionary.text('Ingrese el nuevo nombre:',
-                                  validate=check_not_empty, qmark='-').ask()
-        url = questionary.text('Ingrese la nueva url:',
-                               validate=check_not_empty, qmark='-').ask()
-        nombre_usuario = questionary.text('Ingrese el nuevo nombre de usuario:',
-                                          validate=check_not_empty, qmark='-').ask()
-        contrasena = questionary.text('Ingrese la nueva contraseña:',
+        first_name = questionary.text('New name:',
                                       validate=check_not_empty, qmark='-').ask()
-        descripcion = questionary.text('Ingrese la nueva descripcion:',
-                                       qmark='-').ask()
-        respuesta = Contrasena.modificar(
-            id, nombre, url, nombre_usuario, contrasena, descripcion)
-        print(respuesta)
+        username = questionary.text('New username:',
+                                    validate=check_not_empty, qmark='-').ask()
+        password = questionary.text('New password:',
+                                    validate=check_not_empty, qmark='-').ask()
+        description = questionary.text('New description:', qmark='-').ask()
+        url = questionary.text('New url:', qmark='-').ask()
+        answer = Password.change_entry(
+            id, first_name, url, username, password, description)
+        print(answer)
 
 
-def eliminar_contrasena():
-    contrasena_maestra = questionary.password(
-        'Ingrese su contraseña maestra: ', qmark='-').ask()
-    respuesta = Usuario.comprobar_contrasena(1, contrasena_maestra)
-    if len(respuesta) == 0:
-        print('Contraseña incorrecta')
+def delete_entry():
+    master_password = questionary.password(
+        'Enter your master password: ', qmark='-').ask()
+    answer = User.check_master_password(1, master_password)
+    if len(answer) == 0:
+        questionary.print('Invalid password', style='fg:darkred')
     else:
-        id = questionary.text('Ingrese el id de la contraseña que desea eliminar: ',
+        id = questionary.text('Enter the id of the entry you want to delete:',
                               validate=check_not_empty, qmark='-').ask()
-        respuesta = Contrasena.eliminar(id)
-        print(respuesta)
+        answer = Password.delete_entry(id)
+        print(answer)
 
 
 if __name__ == '__main__':
-    inicio()
+    home()

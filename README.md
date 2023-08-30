@@ -1,12 +1,11 @@
-# Gestor de contraseñas
+# Password manager
 
-Pequeño proyecto creado con el objetivo de poner en práctica distintas tecnologías.
-
+Small project created with the objective of putting in practice different technologies learned.
 ## TODO
 
-- [x] Crear un gestor de contraseñas (curso POO).
-- [x] Mejorar la interfaz usando la librería *questionary*.
-- [ ] Traducir al inglés.
-- [ ] Crear tests.
-- [ ] Permitir múltiples usuarios.
-- [ ] Crear una interfaz gráfica.
+- [x] Create a simple password manager (POO course).
+- [x] Enhance the interface using the *questionary* package.
+- [x] Translate from Spanish to English.
+- [ ] Create unit tests.
+- [ ] Allow multiple users.
+- [ ] Add graphic interface.
